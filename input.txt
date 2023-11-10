@@ -1,5 +1,4 @@
-if (a >= b)
-{ // hi
+f (a == b)
+{
     return 0;
-} //check if a is greater than or equal to b
-std::cout << (["hey there buddy" + "wowie"]); // okay
+} //check if a is equal to b

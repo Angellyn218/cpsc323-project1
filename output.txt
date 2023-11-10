@@ -1,0 +1,11 @@
+"f" = identifier
+"(" = separator
+"a" = identifier
+"==" = operator
+"b" = identifier
+")" = separator
+"{" = separator
+"return" = keyword
+"0" = integer
+";" = separator
+"}" = separator
