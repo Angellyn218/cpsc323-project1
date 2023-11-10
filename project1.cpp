@@ -22,7 +22,7 @@ int main()
 {
     LexAnalyzer lexA{};
 
-    lexA.analyze(INPUT_FILE_PATH, INPUT_FILE_PATH);
+    lexA.analyze(INPUT_FILE_PATH, INPUT_FILE_NAME);
 
     return 0;
 }

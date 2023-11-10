@@ -19,6 +19,13 @@
 
 class LexAnalyzer {
 public:
+    // destructor
+    ~LexAnalyzer() {
+        delete v_untokenized_file_lines;
+        delete input_file;
+        delete output_file;
+    }
+
     int analyze(const std::string& path, const std::string& fileName) {
         input_file = new std::ifstream(path + fileName);
         output_file = new std::ofstream(path + "output.txt");
@@ -37,8 +44,9 @@ public:
 
         return 0;
     }
+
 private:
-    std::vector<std::string>* v_tokens;
+    std::vector<std::string>* v_untokenized_file_lines;
     std::ifstream* input_file;
     std::ofstream* output_file;
 
@@ -56,68 +64,71 @@ private:
     void tokenize() {
         createInitialVector();
 
-        std::smatch m;
+        std::smatch search_output;
         std::string replace_str;
 
         // throughout this portion of the code, <<< and >>> will be used to mark any strings that have already been tokenized
-        for (std::string& s : *v_tokens) {
+        // the regexes used are specifically made to ignore input that has already been tokenized
+        for (std::string& v_str : *v_untokenized_file_lines) {
             
             // remove all comments
-            s = std::regex_replace(s, t_comment, "");
+            v_str = std::regex_replace(v_str, t_comment, "");
 
             // identify all literal tokens
-            while (std::regex_search(s, m, t_literal)) {
-                for (auto str : m) { replace_str += str; }
-                s = std::regex_replace(s, t_literal, "<<<\"" + replace_str + "\" = literal>>>", std::regex_constants::format_first_only);
-                replace_str = "";
+            while (std::regex_search(v_str, search_output, t_literal)) {
+                // for all identified parts of the found string, append together in order to tokenize into one
+                for (auto str : search_output) { replace_str += str; }
+                v_str = std::regex_replace(v_str, t_literal, "<<<\"" + replace_str + "\" = literal>>>", std::regex_constants::format_first_only);
+                replace_str = ""; // reset replace_str for next loop
             }
 
-            // identify all keyword tokens
-            while (std::regex_search(s, m, t_keyword)) {
-                s = std::regex_replace(s, t_keyword, "<<<\"" + m.str() + "\" = keyword>>>", std::regex_constants::format_first_only);
+            // identify all keyword tokens and replace itself in string
+            while (std::regex_search(v_str, search_output, t_keyword)) {
+                v_str = std::regex_replace(v_str, t_keyword, "<<<\"" + search_output.str() + "\" = keyword>>>", std::regex_constants::format_first_only);
             }
 
-            // identify all separator tokens
-            while (std::regex_search(s, m, t_separator)) {
-                s = std::regex_replace(s, t_separator, "<<<\"" + m.str() + "\" = separator>>>", std::regex_constants::format_first_only);
+            // identify all separator tokens and replace itself in string
+            while (std::regex_search(v_str, search_output, t_separator)) {
+                v_str = std::regex_replace(v_str, t_separator, "<<<\"" + search_output.str() + "\" = separator>>>", std::regex_constants::format_first_only);
             }
 
-            // identify all integer tokens
-            while (std::regex_search(s, m, t_integer)) {
-                s = std::regex_replace(s, t_integer, "<<<\"" + m.str() + "\" = integer>>>", std::regex_constants::format_first_only);
+            // identify all integer tokens and replace itself in string
+            while (std::regex_search(v_str, search_output, t_integer)) {
+                v_str = std::regex_replace(v_str, t_integer, "<<<\"" + search_output.str() + "\" = integer>>>", std::regex_constants::format_first_only);
             }
 
-            // identify all identifier tokens
-            while (std::regex_search(s, m, t_identifer)) {
-                s = std::regex_replace(s, t_identifer, "<<<\"" + m.str() + "\" = identifier>>>", std::regex_constants::format_first_only);
+            // identify all identifier tokens and replace itself in string
+            while (std::regex_search(v_str, search_output, t_identifer)) {
+                v_str = std::regex_replace(v_str, t_identifer, "<<<\"" + search_output.str() + "\" = identifier>>>", std::regex_constants::format_first_only);
             }
 
-            // identify all operator tokens
-            while (std::regex_search(s, m, t_operator)) { 
-                s = std::regex_replace(s, t_operator, "<<<\"" + m.str() + "\" = operator>>>", std::regex_constants::format_first_only);
+            // identify all operator tokens and replace itself in string
+            while (std::regex_search(v_str, search_output, t_operator)) { 
+                v_str = std::regex_replace(v_str, t_operator, "<<<\"" + search_output.str() + "\" = operator>>>", std::regex_constants::format_first_only);
             }
 
             // remove all whitespace
-            s = std::regex_replace(s, t_whitespace, "");
+            v_str = std::regex_replace(v_str, t_whitespace, "");
 
             // delete and replace all the uncessary markers with proper formatting
-            s = std::regex_replace(s, std::regex("<<<"), "");
-            s = std::regex_replace(s, std::regex(">>>"), "\n");
+            v_str = std::regex_replace(v_str, std::regex("<<<"), "");
+            v_str = std::regex_replace(v_str, std::regex(">>>"), "\n");
 
-            // append tokenized line to output file
-            const char* str = s.c_str();
-            output_file->write(str, s.length());
+            // convert tokenized string to char array to prep for writing
+            const char* char_arr = v_str.c_str();
+            // write tokenized char array to output file
+            output_file->write(char_arr, v_str.length());
         }
     }
 
     // append all lines of input file to vector for easier handling
     void createInitialVector() {
         std::string line;
-
-        v_tokens = new std::vector<std::string>;
+        v_untokenized_file_lines = new std::vector<std::string>;
         
+        // until unable to get a line from input file, push line from input file onto vector
         while (getline(*input_file, line)) {
-            v_tokens->push_back(line);
+            v_untokenized_file_lines->push_back(line);
         }
     }
 };
