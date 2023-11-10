@@ -19,6 +19,12 @@
 
 class LexAnalyzer {
 public:
+    ~LexAnalyzer() {
+        delete v_tokens;
+        delete input_file;
+        delete output_file;
+    }
+
     int analyze(const std::string& path, const std::string& fileName) {
         input_file = new std::ifstream(path + fileName);
         output_file = new std::ofstream(path + "output.txt");
