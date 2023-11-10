@@ -1,0 +1,4 @@
+f (a == b)
+{
+    return 0;
+} //check if a is equal to b
